@@ -1,3 +1,5 @@
+from freidman import frequency_analysis, friedman_examination
+from kasiski import kasiski_examination
 
 def vigenere_encrypt(text, key):
     key = key.upper()
@@ -37,3 +39,40 @@ print("Зашифрований текст:", encrypted_text)
 decrypted_text = vigenere_decrypt(encrypted_text, key)
 print("Розшифрований текст:", decrypted_text)
 
+def preprocess_text(text):
+    return ''.join([char.upper() for char in text if char.isalpha()])
+
+def recover_key(ciphertext, key_length):
+    key = ''
+    for i in range(key_length):
+        subtext = ciphertext[i::key_length]
+        key_char = frequency_analysis(subtext)
+        key += key_char
+    return key
+
+
+processed_text = preprocess_text(encrypted_text)
+
+# Метод Касіскі
+possible_lengths_kasiski = kasiski_examination(processed_text)
+
+# Тест Фрідмана
+possible_lengths_friedman = friedman_examination(processed_text)
+
+# Об'єднуємо можливі довжини ключа
+possible_key_lengths = set(possible_lengths_kasiski + possible_lengths_friedman)
+
+# Спробуємо відновити ключ для кожної можливої довжини
+for key_length in possible_key_lengths:
+    recovered_key = recover_key(processed_text, key_length)
+    decrypted_text = vigenere_decrypt(encrypted_text, recovered_key)
+    if "THE" in decrypted_text[:500]:
+        print("Знайдено правильний ключ!")
+        break
+    if decrypted_text[:500] == text[:500]:
+        print(f"\nДешифрований текст з ключем {recovered_key}:\n")
+        print(decrypted_text[:500])
+        print("\n\n")
+        break
+    else:
+        print(f"Дешифрування з ключем {recovered_key} не вдалося")
